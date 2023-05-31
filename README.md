@@ -55,13 +55,13 @@ data/
 The main script for training the GNN model is `train.py and train_optimizetion`. You can run the script with the following command:
 
 ```
-    Run the `train.py` script NOTE: In this model No optimization present
+    Run the python3 `train.py` script NOTE: In this model No optimization present
 
 ```
 
 
 ```
-    python train_optimizetion.py --train-data-path data/train.csv --test-data-path data/test.csv --model GNN1 --epochs 100
+    python3 train_optimizetion.py --train-data-path data/train.csv --test-data-path data/test.csv --model GNN1 --epochs 100
 
 ```
 
@@ -95,6 +95,6 @@ To choose a specific GNN model, use the `--model` argument when running the trai
 
 - The script uses Optuna library for hyperparameter optimization. The hyperparameters and their search spaces are defined in the `config.py` file. You can modify the hyperparameters and their ranges according to your requirements.
 
-##Save the trained model:
+## Save the trained model:
 
 - The trained model will be automatically saved in the `model_weights` directory with the filename `model.pth`.
