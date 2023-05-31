@@ -45,7 +45,7 @@ data/
 
 ## Visualization 
 
-![Molecues Images](GNN-Based-HIV-Molecules-Classification\gnn_project\visualization\image_0.png)
+![Molecues Images](\visualization\image_0.png)
 
 ---
 ## Usage
