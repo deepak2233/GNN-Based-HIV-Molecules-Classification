@@ -45,7 +45,9 @@ data/
 
 ## Visualization 
 
-![Molecues Images](\visualization\image_0.png)
+<p align = 'center'>
+  <img src = './visualization/image_0.png' align = 'center'>
+</p>
 
 ---
 ## Usage
