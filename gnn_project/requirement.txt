@@ -1,0 +1,16 @@
+torch-scatter -f https://pytorch-geometric.com/whl/torch-${pt_version}.html
+torch-sparse -f https://pytorch-geometric.com/whl/torch-${pt_version}.html
+torch-cluster -f https://pytorch-geometric.com/whl/torch-${pt_version}.html
+torch-spline-conv -f https://pytorch-geometric.com/whl/torch-${pt_version}.html
+torch-geometric
+torch-geometric-temporal
+rdkit-pypi -qqq
+deepchem
+cairosvg
+pandas
+seaborn
+pytorch
+pillow
+torch
+torch-geometric
+Optuna
