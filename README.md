@@ -61,7 +61,7 @@ The main script for training the GNN model is `train.py and train_optimizetion`.
 
 
 ```
-    python3 train_optimizetion.py --train-data-path data/train.csv --test-data-path data/test.csv --model GNN1 --epochs 100
+    python3 train_optimizetion.py --train-data-path data/HIV_train_oversampled.csv --test-data-path data/HIV_test.csv --model GNN1 --epochs 10
 
 ```
 
