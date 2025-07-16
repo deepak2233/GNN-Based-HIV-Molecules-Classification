@@ -101,7 +101,7 @@ print(model)
 # Loss and Optimizer
 # Due to imbalance postive and negative label so apply weight in the +ve side < 1 increases precision, > 1 recall
 weight = torch.tensor([1,10], dtype=torch.float32).to(device)
-loss_fn = torch.nn.CrossEntropyLoss(weight==weight)
+loss_fn = torch.nn.CrossEntropyLoss(weight=weight)
 optimizer = torch.optim.SGD(model.parameters(), 
                             lr=0.1,
                             momentum=0.9)
@@ -246,7 +246,7 @@ print([best_loss])
 
 output_folder = "model_weight"
 os.makedirs(output_folder, exist_ok=True)
-model_path = os.join.path(output_folder,"model.pth") # Replace with the desired path to save the model
+model_path = os.path.join(output_folder, "model.pth")  # Replace with the desired path to save the model
 torch.save(model, model_path)
 
 # %%
