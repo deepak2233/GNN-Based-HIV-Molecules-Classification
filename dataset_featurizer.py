@@ -6,6 +6,7 @@ import os
 from tqdm import tqdm
 import deepchem as dc
 from rdkit import Chem
+import numpy as np
 
 print(f"Torch version: {torch.__version__}")
 print(f"Cuda available: {torch.cuda.is_available()}")

@@ -2,13 +2,15 @@ import torch
 import pandas as pd
 from dataset_featurizer import MoleculeDataset
 from sklearn.metrics import confusion_matrix, accuracy_score, roc_auc_score
+from torch_geometric.data import DataLoader
+
 
 # Load the test dataset
 test_dataset = MoleculeDataset(root="data/split_data", filename="HIV_test.csv", test=True)
 test_loader = DataLoader(test_dataset, batch_size=NUM_GRAPHS_PER_BATCH, shuffle=True)
 
 # Load the trained model
-model = torch.load(os.join.path(output_folder,"model.pth"))
+model = torch.load(os.path.join(output_folder, "model.pth"))
 model.eval()
 
 # Create lists to store the predicted and true labels
