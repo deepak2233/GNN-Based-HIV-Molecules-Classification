@@ -5,7 +5,7 @@ torch-scatter
 torch-sparse
 torch-cluster
 torch-spline-conv
-rdkit
+rdkit-pypi
 deepchem
 cairosvg
 pandas
