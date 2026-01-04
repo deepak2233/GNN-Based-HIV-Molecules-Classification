@@ -19,7 +19,7 @@ cd gnn_project
 Install the required dependencies by running the following command:
 
 ```
-pip install -r requirement.txt
+pip install -r requirements.txt
 ```
 
 ---
@@ -52,17 +52,31 @@ data/
 ---
 ## Usage
 
-The main script for training the GNN model is `train.py and train_optimizetion`. You can run the script with the following command:
+The repository uses a unified CLI `main.py` for all operations.
 
+### Training
+Train the model (GNN1, GNN2, or GNN3) with custom parameters:
+```bash
+python main.py --mode train --model_type GNN3 --epochs 100 --batch_size 128
 ```
-    Run the python3 `train.py` script NOTE: In this model No optimization present
+*Note: We use Weighted BCE Loss to handle Class Imbalance.*
 
+### Hyperparameter Optimization
+Run Optuna optimization to find the best learning rate and batch size:
+```bash
+python main.py --mode optimize --model_type GNN2
 ```
 
-
+### Inference
+Run inference on the test set using a trained model:
+```bash
+python main.py --mode test --model_type GNN3 --output_dir outputs
 ```
-    python3 train_optimizetion.py --train-data-path data/HIV_train_oversampled.csv --test-data-path data/HIV_test.csv --model GNN1 --epochs 10
 
+### Streamlit App
+Launch the professional dashboard for prediction and analysis:
+```bash
+streamlit run app.py
 ```
 
 ---

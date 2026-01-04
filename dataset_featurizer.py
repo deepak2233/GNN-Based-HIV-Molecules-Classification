@@ -4,12 +4,8 @@ import torch_geometric
 from torch_geometric.data import Dataset, Data
 import os
 from tqdm import tqdm
-import deepchem as dc
+import numpy as np
 from rdkit import Chem
-
-print(f"Torch version: {torch.__version__}")
-print(f"Cuda available: {torch.cuda.is_available()}")
-print(f"Torch geometric version: {torch_geometric.__version__}")
 
 class MoleculeDataset(Dataset):
     def __init__(self, root, filename, test=False, transform=None, pre_transform=None):
@@ -23,137 +19,94 @@ class MoleculeDataset(Dataset):
         
     @property
     def raw_file_names(self):
-        """ If this file exists in raw_dir, the download is not triggered.
-            (The download func. is not implemented here)  
-        """
-        return self.filename
+        return [self.filename]
 
     @property
     def processed_file_names(self):
-        """ If these files are found in raw_dir, processing is skipped"""
-        self.data = pd.read_csv(os.path.join(self.root,self.filename)).reset_index()
+        data_path = os.path.join(self.raw_dir, self.filename)
+        if not os.path.exists(data_path):
+            data_path = os.path.join(self.root, self.filename)
+            
+        self.data = pd.read_csv(data_path).reset_index()
 
         if self.test:
-            return [f'data_test_{i}.pt' for i in list(self.data.index)]
+            return [f'data_test_{self.filename}_{i}.pt' for i in list(self.data.index)]
         else:
-            return [f'data_{i}.pt' for i in list(self.data.index)]
+            return [f'data_{self.filename}_{i}.pt' for i in list(self.data.index)]
 
     def download(self):
         pass
 
     def process(self):
-        self.data = pd.read_csv(os.path.join(self.root,self.filename))
-        for index, mol in tqdm(self.data.iterrows(), total=self.data.shape[0]):
-            mol_obj = Chem.MolFromSmiles(mol["smiles"])
-            # Get node features
+        data_path = os.path.join(self.raw_dir, self.filename)
+        if not os.path.exists(data_path):
+            data_path = os.path.join(self.root, self.filename)
+            
+        self.data = pd.read_csv(data_path)
+        for index, mol_row in tqdm(self.data.iterrows(), total=self.data.shape[0], desc="Processing molecules"):
+            mol_obj = Chem.MolFromSmiles(mol_row["smiles"])
+            if mol_obj is None:
+                continue
+                
             node_feats = self._get_node_features(mol_obj)
-            # Get edge features
             edge_feats = self._get_edge_features(mol_obj)
-            # Get adjacency info
             edge_index = self._get_adjacency_info(mol_obj)
-            # Get labels info
-            label = self._get_labels(mol["HIV_active"])
+            label = self._get_labels(mol_row["HIV_active"])
 
-            # Create data object
             data = Data(x=node_feats, 
                         edge_index=edge_index,
                         edge_attr=edge_feats,
                         y=label,
-                        smiles=mol["smiles"]
+                        smiles=mol_row["smiles"]
                         ) 
-            if self.test:
-                torch.save(data, 
-                    os.path.join(self.processed_dir, 
-                                 f'data_test_{index}.pt'))
-            else:
-                torch.save(data, 
-                    os.path.join(self.processed_dir, 
-                                 f'data_{index}.pt'))
+            
+            prefix = 'data_test' if self.test else 'data'
+            torch.save(data, os.path.join(self.processed_dir, f'{prefix}_{self.filename}_{index}.pt'))
 
     def _get_node_features(self, mol):
-        """ 
-        This will return a matrix / 2d array of the shape
-        [Number of Nodes, Node Feature size]
-        """
         all_node_feats = []
-
         for atom in mol.GetAtoms():
-            node_feats = []
-            # Feature 1: Atomic number        
-            node_feats.append(atom.GetAtomicNum())
-            # Feature 2: Atom degree
-            node_feats.append(atom.GetDegree())
-            # Feature 3: Formal charge
-            node_feats.append(atom.GetFormalCharge())
-            # Feature 4: Hybridization
-            node_feats.append(atom.GetHybridization())
-            # Feature 5: Aromaticity
-            node_feats.append(atom.GetIsAromatic())
-            # Feature 6: Total Num Hs
-            node_feats.append(atom.GetTotalNumHs())
-            # Feature 7: Radical Electrons
-            node_feats.append(atom.GetNumRadicalElectrons())
-            # Feature 8: In Ring
-            node_feats.append(atom.IsInRing())
-            # Feature 9: Chirality
-            node_feats.append(atom.GetChiralTag())
-
-            # Append node features to matrix
+            node_feats = [
+                atom.GetAtomicNum(),
+                atom.GetDegree(),
+                atom.GetFormalCharge(),
+                int(atom.GetHybridization()),
+                int(atom.GetIsAromatic()),
+                atom.GetTotalNumHs(),
+                atom.GetNumRadicalElectrons(),
+                int(atom.IsInRing()),
+                int(atom.GetChiralTag())
+            ]
             all_node_feats.append(node_feats)
-
-        all_node_feats = np.asarray(all_node_feats)
-        return torch.tensor(all_node_feats, dtype=torch.float)
+        return torch.tensor(np.array(all_node_feats), dtype=torch.float)
 
     def _get_edge_features(self, mol):
-        """ 
-        This will return a matrix / 2d array of the shape
-        [Number of edges, Edge Feature size]
-        """
         all_edge_feats = []
-
         for bond in mol.GetBonds():
-            edge_feats = []
-            # Feature 1: Bond type (as double)
-            edge_feats.append(bond.GetBondTypeAsDouble())
-            # Feature 2: Rings
-            edge_feats.append(bond.IsInRing())
-            # Append node features to matrix (twice, per direction)
+            edge_feats = [
+                bond.GetBondTypeAsDouble(),
+                int(bond.IsInRing())
+            ]
             all_edge_feats += [edge_feats, edge_feats]
-
-        all_edge_feats = np.asarray(all_edge_feats)
-        return torch.tensor(all_edge_feats, dtype=torch.float)
+        return torch.tensor(np.array(all_edge_feats), dtype=torch.float)
 
     def _get_adjacency_info(self, mol):
-        """
-        We could also use rdmolops.GetAdjacencyMatrix(mol)
-        but we want to be sure that the order of the indices
-        matches the order of the edge features
-        """
         edge_indices = []
         for bond in mol.GetBonds():
             i = bond.GetBeginAtomIdx()
             j = bond.GetEndAtomIdx()
             edge_indices += [[i, j], [j, i]]
 
-        edge_indices = torch.tensor(edge_indices)
-        edge_indices = edge_indices.t().to(torch.long).view(2, -1)
+        edge_indices = torch.tensor(edge_indices).t().to(torch.long).view(2, -1)
         return edge_indices
 
     def _get_labels(self, label):
-        label = np.asarray([label])
-        return torch.tensor(label, dtype=torch.int64)
+        return torch.tensor([label], dtype=torch.int64)
 
     def len(self):
         return self.data.shape[0]
 
     def get(self, idx):
-        """ - Equivalent to __getitem__ in pytorch
-            - Is not needed for PyG's InMemoryDataset
-        """
-        if self.test:
-            data = torch.load(os.path.join('../',self.processed_dir, 
-                                 f'data_test_{idx}.pt'))
-        else:
-            data = torch.load(os.path.join('../', self.processed_dir, 
-                                 f'data_{idx}.pt'))   
+        prefix = 'data_test' if self.test else 'data'
+        data = torch.load(os.path.join(self.processed_dir, f'{prefix}_{self.filename}_{idx}.pt'), weights_only=False)
         return data
